@@ -1,149 +1,221 @@
-# Smart Queue API
+# 🚀 Smart Queue API
 
-A simple REST API for managing a customer queue in a small service center.
+> Kiçik xidmət mərkəzi üçün hazırlanmış sadə, səliqəli və təhlükəsiz növbə idarəetmə REST API-si.
 
-The application allows customers to join the queue, view waiting customers, check their current position, call the next customer, and remove customers from the queue.
+**NV ProjectLab Backend Interview Task** çərçivəsində hazırlanmışdır.
 
-The project was developed as part of the **NV ProjectLab Backend Interview Task**.
-
----
-
-## Features
-
-* Add a new customer to the queue
-* View all waiting customers
-* Check a customer's current queue position
-* Call the next customer
-* Remove a customer from the queue
-* FIFO (First In, First Out) queue ordering
-* Customer status management
-* Request validation
-* Consistent error responses
-* Database persistence with MySQL
-* Concurrent `/next` request protection
-* Automated controller tests
+Smart Queue API müştərilərin növbəyə əlavə olunmasını, növbədəki mövqelərinin yoxlanılmasını, növbəti müştərinin çağırılmasını və müştərilərin növbədən silinməsini təmin edir.
 
 ---
 
-## Tech Stack
+## ✨ Əsas imkanlar
 
-* **Java 25**
-* **Spring Boot 4.1.1**
-* **Spring Web MVC**
-* **Spring Data JPA**
-* **Hibernate**
-* **MySQL**
-* **Maven**
-* **JUnit 5**
-* **MockMvc**
+* 👤 Yeni müştərinin növbəyə əlavə edilməsi
+* 📋 Gözləyən müştərilərin siyahısının göstərilməsi
+* 🔢 Müştərinin cari növbə mövqeyinin hesablanması
+* 📢 Növbəti müştərinin çağırılması
+* 🗑️ Müştərinin növbədən silinməsi
+* 🔄 **FIFO (First In, First Out)** növbə prinsipi
+* 🟢 Müştəri statuslarının idarə olunması
+* ✅ Request validation
+* ⚠️ Vahid error response strukturu
+* 💾 MySQL ilə məlumatların saxlanılması
+* 🔒 **Concurrent `/next` sorğularından qorunma**
+* 🧪 Avtomatlaşdırılmış controller testləri
 
 ---
 
-## Project Structure
+## 🛠️ Texnologiyalar
+
+| Texnologiya           | İstifadə məqsədi               |
+| --------------------- | ------------------------------ |
+| **Java 25**           | Əsas proqramlaşdırma dili      |
+| **Spring Boot 4.1.1** | Backend framework              |
+| **Spring Web MVC**    | REST API                       |
+| **Spring Data JPA**   | Database interaction           |
+| **Hibernate**         | ORM                            |
+| **MySQL**             | Relational database            |
+| **Maven**             | Dependency və build management |
+| **JUnit 5**           | Testing                        |
+| **MockMvc**           | Controller testləri            |
+
+---
+
+## 🏗️ Layihə arxitekturası
 
 ```text
 src/main/java/com/example/smartqueueapi
+│
 ├── controller
 │   └── QueueCustomerController.java
+│
 ├── service
 │   └── QueueCustomerService.java
+│
 ├── repository
 │   └── QueueCustomerRepository.java
+│
 ├── dto
 │   ├── QueueCustomerRequest.java
-│   ├── QueueCustomerResponse.java
-│   └── ErrorResponse.java
+│   └── QueueCustomerResponse.java
+│
 ├── exception
+│   ├── ErrorResponse.java
 │   └── GlobalExceptionHandler.java
+│
 └── entity
     ├── QueueCustomer.java
     └── QueueStatus.java
 ```
 
-The application follows a simple layered architecture:
+Layihədə sadə **layered architecture** istifadə olunur:
 
 **Controller → Service → Repository → Database**
 
-* **Controller** handles HTTP requests and responses.
-* **Service** contains the queue business logic.
-* **Repository** communicates with the database using Spring Data JPA.
-* **Entity** represents database data.
-* **DTOs** are used for API requests and responses.
-* **Exception Handler** provides consistent error responses.
+* **Controller** — HTTP request-ləri qəbul edir və response qaytarır.
+* **Service** — növbənin əsas business logic hissəsini idarə edir.
+* **Repository** — database ilə əlaqəni təmin edir.
+* **Entity** — database-dəki məlumatları modelləşdirir.
+* **DTO** — API-yə daxil olan və API-dən çıxan məlumatları idarə edir.
+* **Exception Handler** — xətaları vahid formatda qaytarır.
 
 ---
 
-## Data Model
+## 👤 Data Model
 
-Each customer contains the following information:
+Hər müştəri aşağıdakı məlumatları saxlayır:
 
-| Field       | Type          | Description                             |
-| ----------- | ------------- | --------------------------------------- |
-| `id`        | Long          | Unique customer identifier              |
-| `name`      | String        | Customer name                           |
-| `createdAt` | LocalDateTime | Time when the customer joined the queue |
-| `status`    | QueueStatus   | Current customer status                 |
+| Field       | Type          | İzah                    |
+| ----------- | ------------- | ----------------------- |
+| `id`        | Long          | Unikal müştəri ID-si    |
+| `name`      | String        | Müştərinin adı          |
+| `createdAt` | LocalDateTime | Növbəyə qoşulma vaxtı   |
+| `status`    | QueueStatus   | Müştərinin cari statusu |
 
-### Customer Statuses
+### Statuslar
 
 ```text
-WAITING
-SERVING
-COMPLETED
+🟡 WAITING
+🔵 SERVING
+🟢 COMPLETED
 ```
 
-`position` is calculated dynamically for waiting customers and is not stored in the database.
+`position` database-də saxlanılmır.
+
+O, yalnız `WAITING` vəziyyətində olan müştərilər əsasında **dinamik hesablanır**.
 
 ---
 
-## Queue Logic
+# 🔄 Növbə məntiqi
 
-The queue follows **FIFO (First In, First Out)** ordering.
+Layihə **FIFO — First In, First Out** prinsipindən istifadə edir.
 
-Waiting customers are ordered by:
+Yəni növbəyə birinci daxil olan müştəri birinci çağırılır.
+
+Gözləyən müştərilər aşağıdakı qaydada sıralanır:
 
 ```text
 createdAt ASC
 id ASC
 ```
 
-The `id` is used as a secondary ordering field to keep the order deterministic when two customers have the same `createdAt` value.
+`createdAt` əsas sıralama meyarıdır.
 
-For example:
+Əgər iki müştərinin `createdAt` dəyəri eyni olarsa, `id` ikinci meyar kimi istifadə olunur. Bu, növbənin deterministik qalmasını təmin edir.
 
-```text
-Customer A → created first
-Customer B → created second
-Customer C → created third
-```
-
-Calling `/api/queue/next` will select:
+Məsələn:
 
 ```text
-Customer A
+👤 A → birinci daxil oldu
+👤 B → ikinci daxil oldu
+👤 C → üçüncü daxil oldu
 ```
 
-After Customer A starts being served:
+`POST /api/queue/next` çağırıldıqda:
 
 ```text
-Customer A → SERVING
-Customer B → WAITING
-Customer C → WAITING
+A → SERVING
+B → WAITING
+C → WAITING
 ```
 
-The queue position is calculated from the current `WAITING` customers, so positions automatically change when customers are removed or served.
+Müştəri növbədən silindikdə və ya `SERVING` vəziyyətinə keçdikdə qalan müştərilərin `position` dəyəri avtomatik olaraq yenidən hesablanır.
 
 ---
 
-## API Endpoints
+# 🔒 Concurrency Protection
 
-### 1. Add Customer
+> **Layihənin əsas texniki hissələrindən biri**
 
-**POST** `/api/queue`
+Task-da tələb olunur ki, iki `/next` request-i eyni anda gəldikdə **eyni müştəri iki dəfə çağırılmasın**.
 
-Adds a new customer to the queue.
+Bunun üçün layihədə:
 
-#### Request
+* `@Transactional`
+* `PESSIMISTIC_WRITE` database lock
+
+istifadə olunur.
+
+Repository-də:
+
+```java
+@Lock(LockModeType.PESSIMISTIC_WRITE)
+Optional<QueueCustomer> findFirstByStatusOrderByCreatedAtAscIdAsc(
+        QueueStatus status);
+```
+
+Service-də isə:
+
+```java
+@Transactional
+public QueueCustomerResponse nextCustomer() {
+    ...
+}
+```
+
+### ⚙️ Mexanizm necə işləyir?
+
+Birinci `/next` request-i `WAITING` vəziyyətində olan müştərini seçdikdə həmin database sətrinə **write lock** qoyulur.
+
+Eyni anda ikinci `/next` request-i gəldikdə həmin müştərini götürə bilmir və birinci transaction-un tamamlanmasını gözləyir.
+
+Birinci request:
+
+```text
+WAITING → SERVING
+```
+
+dəyişiklik etdikdən sonra ikinci request davam edir və növbədəki digər `WAITING` müştərini seçir.
+
+Beləliklə:
+
+```text
+Request 1 → Customer A
+Request 2 → Customer B
+```
+
+və:
+
+```text
+❌ Request 1 → Customer A
+❌ Request 2 → Customer A
+```
+
+vəziyyətinin qarşısı alınır.
+
+Bu davranış ayrıca **concurrent controller test** ilə də yoxlanılmışdır.
+
+---
+
+# 🌐 API Endpoints
+
+## 1️⃣ Müştəri əlavə etmək
+
+### `POST /api/queue`
+
+Yeni müştərini növbəyə əlavə edir.
+
+**Request:**
 
 ```json
 {
@@ -151,9 +223,7 @@ Adds a new customer to the queue.
 }
 ```
 
-#### Response
-
-**201 Created**
+**Response — `201 Created`:**
 
 ```json
 {
@@ -165,24 +235,24 @@ Adds a new customer to the queue.
 }
 ```
 
-A new customer automatically receives:
+Yeni müştəri avtomatik olaraq:
 
 ```text
 status = WAITING
 createdAt = current time
 ```
 
+alır.
+
 ---
 
-### 2. Get Waiting Customers
+## 2️⃣ Gözləyən müştəriləri göstərmək
 
-**GET** `/api/queue`
+### `GET /api/queue`
 
-Returns all customers currently waiting in the queue.
+Hazırda `WAITING` vəziyyətində olan bütün müştəriləri qaytarır.
 
-#### Response
-
-**200 OK**
+**Response — `200 OK`:**
 
 ```json
 [
@@ -203,25 +273,21 @@ Returns all customers currently waiting in the queue.
 ]
 ```
 
-Only customers with `WAITING` status are returned.
-
 ---
 
-### 3. Get Customer by ID
+## 3️⃣ Müştərini ID ilə tapmaq
 
-**GET** `/api/queue/{id}`
+### `GET /api/queue/{id}`
 
-Returns a customer's information and current queue position.
+Müştərinin məlumatlarını və cari növbə mövqeyini qaytarır.
 
-#### Example
+**Məsələn:**
 
 ```text
 GET /api/queue/1
 ```
 
-#### Response
-
-**200 OK**
+**Response — `200 OK`:**
 
 ```json
 {
@@ -233,11 +299,17 @@ GET /api/queue/1
 }
 ```
 
-For customers who are no longer waiting, `position` is returned as `null`.
+Müştəri artıq gözləmirsə:
 
-#### Customer Not Found
+```json
+"position": null
+```
 
-**404 Not Found**
+qaytarılır.
+
+Müştəri mövcud deyilsə:
+
+**`404 Not Found`**
 
 ```json
 {
@@ -250,19 +322,19 @@ For customers who are no longer waiting, `position` is returned as `null`.
 
 ---
 
-### 4. Call Next Customer
+## 4️⃣ Növbəti müştərini çağırmaq
 
-**POST** `/api/queue/next`
+### `POST /api/queue/next`
 
-Selects the first waiting customer and changes their status from:
+Növbədəki ilk `WAITING` müştərini seçir və statusunu:
 
 ```text
 WAITING → SERVING
 ```
 
-#### Response
+dəyişir.
 
-**200 OK**
+**Response — `200 OK`:**
 
 ```json
 {
@@ -274,9 +346,9 @@ WAITING → SERVING
 }
 ```
 
-If there are no waiting customers:
+Növbədə heç kim yoxdursa:
 
-**404 Not Found**
+**`404 Not Found`**
 
 ```json
 {
@@ -289,54 +361,27 @@ If there are no waiting customers:
 
 ---
 
-## Concurrency Handling
+## 5️⃣ Müştərini silmək
 
-One of the requirements of the task is to prevent the same customer from being called twice if two requests to `/next` arrive at the same time.
+### `DELETE /api/queue/{id}`
 
-The application handles this using a **database pessimistic write lock** together with a **transaction**.
+Müştərini database-dən silir.
 
-The repository uses:
+Uğurlu olduqda:
 
-```java
-@Lock(LockModeType.PESSIMISTIC_WRITE)
-Optional<QueueCustomer> findFirstByStatusOrderByCreatedAtAscIdAsc(
-        QueueStatus status);
-```
+**`204 No Content`**
 
-The service method is transactional:
+Müştəri mövcud deyilsə:
 
-```java
-@Transactional
-public QueueCustomerResponse nextCustomer() {
-    ...
-}
-```
-
-### How it works
-
-When the first `/next` request selects a waiting customer, the database places a write lock on that selected row.
-
-If another `/next` request arrives at the same time, it cannot select and update the same locked customer. It waits for the first transaction to finish.
-
-After the first request changes the customer's status:
-
-```text
-WAITING → SERVING
-```
-
-the second request continues and selects the next available `WAITING` customer.
-
-Therefore, two concurrent `/next` requests cannot serve the same customer.
-
-This behavior is also covered by an automated concurrent test.
+**`404 Not Found`**
 
 ---
 
-## Validation
+# ✅ Validation
 
-The customer name is required and cannot be blank.
+Müştərinin adı boş ola bilməz.
 
-For example:
+Məsələn:
 
 ```json
 {
@@ -344,9 +389,11 @@ For example:
 }
 ```
 
-returns:
+request-i:
 
-**400 Bad Request**
+**`400 Bad Request`**
+
+qaytarır.
 
 ```json
 {
@@ -357,45 +404,66 @@ returns:
 }
 ```
 
----
-
-## Error Handling
-
-The application uses a global exception handler to return consistent error responses.
-
-Handled cases include:
-
-* Invalid request data → `400 Bad Request`
-* Customer not found → `404 Not Found`
-* No waiting customers → `404 Not Found`
+Validation üçün `@NotBlank` istifadə olunur.
 
 ---
 
-## Database
+# ⚠️ Error Handling
 
-The application uses **MySQL** for persistent storage.
+Layihədə bütün əsas xətalar üçün **Global Exception Handler** istifadə olunur.
 
-Create the database:
+Əsas hallara:
+
+* `400 Bad Request` — düzgün olmayan request
+* `404 Not Found` — müştəri tapılmadıqda
+* `404 Not Found` — növbədə gözləyən müştəri olmadıqda
+
+daxildir.
+
+Error response-lar vahid formatda qaytarılır:
+
+```json
+{
+  "timestamp": "...",
+  "status": 404,
+  "message": "...",
+  "path": "..."
+}
+```
+
+---
+
+# 💾 Database
+
+Layihədə məlumatların saxlanılması üçün **MySQL** istifadə olunur.
+
+Database yaratmaq üçün:
 
 ```sql
 CREATE DATABASE smart_queue;
 ```
 
-The application connects using:
+Database connection:
 
 ```properties
 spring.datasource.url=jdbc:mysql://localhost:3306/smart_queue
 spring.datasource.username=root
-spring.datasource.password=YOUR_PASSWORD
+spring.datasource.password=${DB_PASSWORD}
 ```
 
-Hibernate automatically creates and updates the required table using:
+MySQL password təhlükəsizlik məqsədilə `application.properties` daxilində saxlanılmır.
+
+`DB_PASSWORD` environment variable olaraq təyin edilməlidir.
+
+Hibernate:
 
 ```properties
 spring.jpa.hibernate.ddl-auto=update
 ```
 
-The main database table is:
+ilə lazımi table-ı avtomatik yaradır və yeniləyir.
+
+Əsas table:
 
 ```text
 queue_customers
@@ -403,52 +471,43 @@ queue_customers
 
 ---
 
-## How to Run
+# ▶️ Layihəni işə salmaq
 
-### 1. Requirements
+## 1. Tələblər
 
-Make sure the following are installed:
+Aşağıdakılar sistemdə quraşdırılmış olmalıdır:
 
 * Java 25
 * Maven
 * MySQL
 
-### 2. Create the Database
-
-Run:
+## 2. Database yarat
 
 ```sql
 CREATE DATABASE smart_queue;
 ```
 
-### 3. Configure Database Credentials
+## 3. Database password təyin et
 
-Open:
+`DB_PASSWORD` environment variable-ına lokal MySQL password-unu əlavə et.
 
-```text
-src/main/resources/application.properties
-```
-
-and update:
+Application bu məlumatı belə oxuyur:
 
 ```properties
-spring.datasource.username=root
-spring.datasource.password=YOUR_PASSWORD
+spring.datasource.password=${DB_PASSWORD}
 ```
 
-Use your local MySQL password.
+## 4. Application-u işə sal
 
-### 4. Run the Application
-
-Using Maven:
+Maven ilə:
 
 ```bash
 mvn spring-boot:run
 ```
 
-Or run the main Spring Boot application from IntelliJ IDEA.
+və ya IntelliJ IDEA daxilindən əsas Spring Boot application-unu run etmək olar.
 
-The API will be available at:
+API:
 
 ```text
 http://localhost:8080
@@ -456,67 +515,75 @@ http://localhost:8080
 
 ---
 
-## Testing
+# 🧪 Testing
 
-The project contains automated controller tests covering the main API behavior.
+Layihədə əsas API davranışlarını yoxlayan **11 controller test** mövcuddur.
 
-The test suite covers:
+Testlər aşağıdakı halları əhatə edir:
 
-* Application context loading
-* Adding customers
-* Request validation
-* Getting waiting customers
-* Getting a customer by ID
-* Customer not found
-* Calling the next customer
-* Removing customers
-* Queue position calculation
-* Concurrent `/next` requests
+* ✅ Application context
+* ✅ Customer əlavə edilməsi
+* ✅ Request validation
+* ✅ Waiting customer-ların gətirilməsi
+* ✅ ID ilə customer tapılması
+* ✅ Customer not found
+* ✅ Next customer çağırılması
+* ✅ Customer silinməsi
+* ✅ Queue position hesablanması
+* ✅ Concurrent `/next` request-ləri
 
-All **11 controller tests pass successfully**.
+**Bütün 11 test uğurla keçir.**
 
 ---
 
-## Example Request Flow
+# 🔁 Nümunə Request Flow
 
-A typical queue flow can look like this:
+Tipik istifadə ssenarisi:
 
 ```text
 POST /api/queue
-        ↓
-Customer added as WAITING
-        ↓
+        │
+        ▼
+👤 Customer əlavə olunur
+        │
+        ▼
+🟡 WAITING
+        │
+        ▼
 GET /api/queue
-        ↓
-Customer appears in the queue
-        ↓
+        │
+        ▼
+📋 Queue və position göstərilir
+        │
+        ▼
 GET /api/queue/{id}
-        ↓
-Current position is returned
-        ↓
+        │
+        ▼
+🔢 Cari position göstərilir
+        │
+        ▼
 POST /api/queue/next
-        ↓
-Customer becomes SERVING
-        ↓
+        │
+        ▼
+🔵 SERVING
+        │
+        ▼
 DELETE /api/queue/{id}
-        ↓
-Customer is removed
+        │
+        ▼
+🗑️ Customer silinir
 ```
 
 ---
 
-## API Summary
+# 📌 API Summary
 
-| Method | Endpoint          | Description                           |
-| ------ | ----------------- | ------------------------------------- |
-| POST   | `/api/queue`      | Add a new customer                    |
-| GET    | `/api/queue`      | Get all waiting customers             |
-| GET    | `/api/queue/{id}` | Get customer information and position |
-| POST   | `/api/queue/next` | Call the next waiting customer        |
-| DELETE | `/api/queue/{id}` | Remove a customer                     |
+| Method   | Endpoint          | Təyinat                               |
+| -------- | ----------------- | ------------------------------------- |
+| `POST`   | `/api/queue`      | Yeni müştəri əlavə et                 |
+| `GET`    | `/api/queue`      | Gözləyən müştəriləri göstər           |
+| `GET`    | `/api/queue/{id}` | Müştəri və position məlumatını göstər |
+| `POST`   | `/api/queue/next` | Növbəti müştərini çağır               |
+| `DELETE` | `/api/queue/{id}` | Müştərini sil                         |
 
----
-
-## Project Goal
-
-The goal of this project is to provide a simple, clean, and functional queue management API while addressing the concurrency problem described in the interview task.
+-
